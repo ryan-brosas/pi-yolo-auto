@@ -1,5 +1,5 @@
 {
-  "name": "pi-yolo-auto-provider",
+  "name": "pi-yolo-auto",
   "version": "0.1.0",
   "description": "Pi provider extension for the Yolo-Auto flat-rate Qwen3.8-27B API (OpenAI-compatible, stale-while-revalidate model catalog sync, subscription usage).",
   "type": "module",
@@ -27,7 +27,9 @@
     "clean": "echo 'nothing to clean'",
     "typecheck": "tsc --noEmit",
     "verify": "npm run check && npm run typecheck && npm test",
-    "prepublishOnly": "npm run verify"
+    "prepublishOnly": "npm run verify",
+    "release:patch": "npm version patch -m \"chore(release): %s\" && git push --follow-tags && npm publish",
+    "release:minor": "npm version minor -m \"chore(release): %s\" && git push --follow-tags && npm publish"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"
