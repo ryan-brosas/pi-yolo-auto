@@ -98,7 +98,7 @@ describe("applyPlanContext", () => {
 	});
 });
 
-import { parseSubscription, subscriptionStatusText, type Subscription } from "./usage.ts";
+import { countSince, nextHeatAt, parseSubscription, REQUEST_HEAT_HOT_MS, REQUEST_HEAT_WARM_MS, requestHeat, requestMilestone, requestSnapshot, sessionElapsed, sessionRpm, subscriptionDetailLines, subscriptionStatusText, withRequestCount, yoloDashboard, type Subscription } from "./usage.ts";
 
 describe("parseSubscription", () => {
 	it("maps plan aliases to canonical tiers", () => {
@@ -142,6 +142,64 @@ describe("parseSubscription", () => {
 	});
 });
 
+describe("subscriptionDetailLines", () => {
+	it("renders plan, remaining, and cap as numbers", () => {
+		const lines = subscriptionDetailLines({ plan: "Pro", requestsRemaining: 120, requestsLimit: 500, requestsPerMin: 10 });
+		assert.equal(lines[0], "Yolo-Auto \u00b7 Pro");
+		assert.equal(lines[1], "120 remaining / 500 limit");
+		assert.equal(lines[2], "10/min cap");
+	});
+
+	it("omits unknown sections and falls back to raw plan", () => {
+		assert.deepEqual(subscriptionDetailLines({ plan: null, rawPlan: "weird" }), ["Yolo-Auto \u00b7 weird"]);
+		assert.equal(subscriptionDetailLines({ plan: "Free", requestsRemaining: 9, requestsLimit: 10 })[1], "9 remaining / 10 limit");
+	});
+});
+describe("withRequestCount", () => {
+	it("renders numeric session + last-1m counts", () => {
+		const snap = (count: number, last1m = 0) => ({ count, last1m, last8m: last1m, elapsed: "1m" });
+		assert.equal(withRequestCount("Pro", snap(14, 3)), "Pro  14 req  3/1m");
+		assert.equal(withRequestCount(undefined, snap(3)), "3 req");
+		assert.equal(withRequestCount("Pro", snap(0)), "Pro");
+		assert.equal(withRequestCount(undefined, snap(0)), undefined);
+	});
+});
+
+describe("countSince / requestHeat / milestone", () => {
+	it("counts timestamps from the tail", () => {
+		assert.equal(countSince([10, 20, 30, 40], 25), 2);
+		assert.equal(countSince([], 0), 0);
+	});
+	it("fades accent \u2192 success \u2192 dim", () => {
+		const t0 = 1_000_000;
+		assert.equal(requestHeat(undefined, t0), "dim");
+		assert.equal(requestHeat(t0, t0), "accent");
+		assert.equal(requestHeat(t0, t0 + REQUEST_HEAT_HOT_MS), "success");
+		assert.equal(requestHeat(t0, t0 + REQUEST_HEAT_WARM_MS), "dim");
+		assert.equal(nextHeatAt(t0, t0), t0 + REQUEST_HEAT_HOT_MS);
+		assert.equal(nextHeatAt(t0, t0 + REQUEST_HEAT_HOT_MS), t0 + REQUEST_HEAT_WARM_MS);
+		assert.equal(nextHeatAt(t0, t0 + REQUEST_HEAT_WARM_MS), null);
+	});
+	it("fires only on exact milestones", () => {
+		assert.equal(requestMilestone(10), 10);
+		assert.equal(requestMilestone(11), null);
+	});
+});
+
+describe("requestSnapshot / dashboard numbers", () => {
+	it("formats elapsed, rpm, and dashboard without a login", () => {
+		assert.equal(sessionElapsed(0, 45_000), "45s");
+		assert.equal(sessionElapsed(0, 120_000), "2m");
+		assert.equal(sessionRpm(0, 0, 60_000), undefined);
+		assert.equal(sessionRpm(12, 0, 60_000), "12/min");
+		const now = 60_000;
+		const snap = requestSnapshot([now - 1_000, now], 3, now, 0);
+		assert.equal(snap.last1m, 2);
+		assert.equal(snap.last8m, 2);
+		assert.deepEqual(yoloDashboard({ plan: "Pro" }, snap), ["Yolo-Auto \u00b7 Pro", "session: 3", "last 1m: 2", "last 8m: 2", "3.0/min  1m"]);
+		assert.deepEqual(yoloDashboard(null, snap).slice(0, 2), ["Yolo-Auto", "session: 3"]);
+	});
+});
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
