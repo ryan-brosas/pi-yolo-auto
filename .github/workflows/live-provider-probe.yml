@@ -1,7 +1,7 @@
 name: live-provider-probe
 
 # Opt-in live verification against the real Yolo-Auto API. Requires the
-# YOLO_AUTO_API_KEY repository secret; without it the jobs no-op with a warning.
+# YOLO_AUTO_API_KEY repository secret; without it the live steps skip with a warning.
 on:
   workflow_dispatch:
   schedule:
@@ -22,10 +22,23 @@ jobs:
         with:
           node-version: 22
 
-      - name: Dry-run model sync (authoritative models.json, no write-back)
-        if: env.YOLO_AUTO_API_KEY != ''
+      - name: Check API key secret
+        id: credentials
+        run: |
+          if [ -z "$YOLO_AUTO_API_KEY" ]; then
+            echo '::warning::No YOLO_AUTO_API_KEY secret; skipping live provider requests.'
+            echo 'available=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'available=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Probe live /models + /usage
+        if: steps.credentials.outputs.available == 'true'
+        run: npm run probe:live
+
+      - name: Dry-run model sync (no write-back)
+        if: steps.credentials.outputs.available == 'true'
         run: node scripts/update-models.js --dry-run
 
-      - name: Sanity-check exported helpers
-        if: env.YOLO_AUTO_API_KEY != ''
+      - name: Sanity-check shipped scripts
         run: npm run check

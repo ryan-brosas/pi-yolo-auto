@@ -25,12 +25,12 @@ already has a resolved model id.
 
 ## Why pi-yolo-auto?
 
-| | Capability | What it unlocks |
-| :-: | --- | --- |
-| ⚡ | **Flat-rate LLM access** | A paid Qwen3.8-27B endpoint integrated like any native pi provider, with no per-token surprise. |
-| 🔄 | **Self-updating model catalog** | Stale-while-revalidate sync keeps `models.json` current without downtime or manual edits. |
-| 📊 | **Subscription visibility** | The status footer shows your tier (Free/Builder/Pro) and request counters straight from `/usage`. |
-| 🪟 | **Plan-aware context** | Qwen3.8-27B reports 128K context on Free/Builder and 256K on Pro, matching the site tiers; the catalog hot-swaps when the detected plan changes. |
+|    | Capability                      | What it unlocks                                                                                                                                  |
+|:--:|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| ⚡ | **Flat-rate LLM access**        | A paid Qwen3.8-27B endpoint integrated like any native pi provider, with no per-token surprise.                                                  |
+| 🔄 | **Self-updating model catalog** | Stale-while-revalidate sync keeps `models.json` current without downtime or manual edits.                                                        |
+| 📊 | **Subscription visibility**     | The status footer shows your tier (Free/Builder/Pro) and request counters straight from `/usage`.                                                |
+| 🪟 | **Plan-aware context**          | Qwen3.8-27B reports 128K context on Free/Builder and 256K on Pro, matching the site tiers; the catalog hot-swaps when the detected plan changes. |
 
 ## How it fits
 
@@ -49,6 +49,12 @@ The extension entry point (`index.ts`) is the composition root: it registers the
 provider, owns the stale-while-revalidate loop over the embedded catalog, and
 feeds the subscription footer. The pure pipeline (`models.ts`, `usage.ts`) stays
 dependency-free so it is unit-testable without pi-ai.
+
+## Available Models
+
+| Model       | Context | Vision | Reasoning | Input $/M | Cache Read $/M | Output $/M |
+|-------------|---------|--------|-----------|-----------|----------------|------------|
+| Qwen3.8 27B | 131K    | ✅     | ✅        | $0.00     | $0.00          | $0.00      |
 
 ## Install
 
