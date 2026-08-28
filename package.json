@@ -1,6 +1,6 @@
 {
   "name": "pi-yolo-auto",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Pi provider extension for the Yolo-Auto flat-rate Qwen3.8-27B API (OpenAI-compatible, stale-while-revalidate model catalog sync, subscription usage).",
   "type": "module",
   "keywords": [
@@ -49,7 +49,7 @@
     "node": ">=22"
   },
   "author": "Ryan Brosas",
-  "homepage": "https://github.com/ryan-brosas/pi-yolo-auto",
+  "homepage": "https://yolo-auto.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/ryan-brosas/pi-yolo-auto.git"
