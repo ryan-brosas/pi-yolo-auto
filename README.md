@@ -49,7 +49,7 @@ dependency-free so it is unit-testable without pi-ai.
 
 ## Install
 
-Any pi package, not a CLI: wire it into the agent's `packages` and load it.
+This is a pi package, not a CLI — wire it into the agent's `packages` and load it.
 
 ### Run from source
 
