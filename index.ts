@@ -15,7 +15,7 @@
  * It is never printed.
  */
 
-import { getAgentDir, type ExtensionAPI, type ModelRegistry } from "@earendil-works/pi-coding-agent";
+import { getAgentDir, type ExtensionAPI, type ExtensionContext, type ModelRegistry } from "@earendil-works/pi-coding-agent";
 import fs from "fs";
 import path from "path";
 import modelsData from "./models.json" with { type: "json" };
@@ -23,7 +23,7 @@ import customModelsData from "./custom-models.json" with { type: "json" };
 import patchData from "./patch.json" with { type: "json" };
 import deprecatedData from "./deprecated-models.json" with { type: "json" };
 import { applyPlanContext, buildModels, toApiModel, transformApiModel, type JsonModel, type PatchData } from "./models.ts";
-import { parseSubscription, subscriptionStatusText, type PlanTier, type Subscription } from "./usage.ts";
+import { COUNT_WINDOW_MS, nextHeatAt, parseSubscription, requestHeat, requestMilestone, requestSnapshot, subscriptionStatusText, withRequestCount, yoloDashboard, type PlanTier, type Subscription } from "./usage.ts";
 
 const PROVIDER_ID = "yolo-auto";
 const BASE_URL = "https://yolo-auto.com/v1";
@@ -137,6 +137,16 @@ let revalidateAbort: AbortController | null = null;
 // context windows were applied to the registered provider.
 let currentBase: JsonModel[] | null = null;
 let currentPlan: PlanTier | null = null;
+// Once-per-session guard for the low-remaining warning.
+let lowWarned = false;
+// Per-session count of completed yolo-auto LLM requests (flat-rate plans are
+// unlimited, so a live counter is more useful than a budget bar).
+let sessionRequests = 0;
+const requestTimes: number[] = [];
+let sessionStartedAt = Date.now();
+let lastSub: Subscription | null = null;
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+let widgetOpen = false;
 
 async function resolveApiKey(modelRegistry: ModelRegistry): Promise<void> {
 	cachedApiKey = (await modelRegistry.getApiKeyForProvider(PROVIDER_ID)) ?? undefined;
@@ -163,10 +173,43 @@ async function fetchSubscription(apiKey: string | undefined, signal?: AbortSigna
 	}
 }
 
-function updateStatus(ctx: any, sub: Subscription | null): void {
-	const text = sub ? subscriptionStatusText(sub) : undefined;
-	const md = ctx.model?.provider === PROVIDER_ID;
-	ctx.ui?.setStatus(`${PROVIDER_ID}-sub`, md && text ? ctx.ui.theme.fg("dim", text) : undefined);
+const STATUS_KEY = `${PROVIDER_ID}-sub`;
+const WIDGET_KEY = `${PROVIDER_ID}-usage`;
+
+function snapNow(now = Date.now()) {
+	return requestSnapshot(requestTimes, sessionRequests, now, sessionStartedAt);
+}
+
+function noteRequest(now: number): void {
+	sessionRequests++;
+	requestTimes.push(now);
+	const cutoff = now - COUNT_WINDOW_MS;
+	while (requestTimes.length && requestTimes[0] < cutoff) requestTimes.shift();
+	if (requestTimes.length > 64) requestTimes.splice(0, requestTimes.length - 64);
+}
+
+function updateStatus(ctx: ExtensionContext, sub: Subscription | null): void {
+	if (!ctx.hasUI) return;
+	const now = Date.now();
+	const snap = snapNow(now);
+	const text = withRequestCount(sub ? subscriptionStatusText(sub) : undefined, snap);
+	const on = ctx.model?.provider === PROVIDER_ID;
+	const heat = requestHeat(requestTimes[requestTimes.length - 1], now);
+	ctx.ui.setStatus(STATUS_KEY, on && text ? ctx.ui.theme.fg(heat, text) : undefined);
+	if (!on) {
+		widgetOpen = false;
+		ctx.ui.setWidget(WIDGET_KEY, undefined);
+	} else if (widgetOpen) {
+		ctx.ui.setWidget(WIDGET_KEY, yoloDashboard(sub, snap));
+	}
+	if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+	const next = nextHeatAt(requestTimes[requestTimes.length - 1], now);
+	if (on && next != null) {
+		idleTimer = setTimeout(() => {
+			idleTimer = null;
+			updateStatus(ctx, sub);
+		}, Math.max(0, next - now) + 10);
+	}
 }
 
 // noinspection JSUnusedGlobalSymbols -- Pi loads this default export from package.json
@@ -193,19 +236,56 @@ export default function (pi: ExtensionAPI) {
 	}
 
 	// Refresh the footer and hot-swap the catalog when the detected plan changes.
-	async function applySubscription(sub: Subscription | null, ctx: any): Promise<void> {
+	async function applySubscription(sub: Subscription | null, ctx: ExtensionContext): Promise<void> {
 		const plan = sub?.plan ?? null;
 		if (plan !== currentPlan) {
+			const prev = currentPlan;
 			currentPlan = plan;
 			registerCatalog();
+			if (ctx.hasUI && prev != null && plan != null && plan !== prev) {
+				ctx.ui.notify(`yolo-auto plan: ${plan}`, "info");
+			}
 		}
+		if (
+			ctx.hasUI && !lowWarned && sub?.requestsRemaining != null && sub.requestsLimit != null &&
+			sub.requestsLimit > 0 && sub.requestsRemaining / sub.requestsLimit <= 0.1
+		) {
+			lowWarned = true;
+			ctx.ui.notify(`yolo-auto: only ${sub.requestsRemaining}/${sub.requestsLimit} requests left`, "warning");
+		}
+		lastSub = sub;
 		updateStatus(ctx, sub);
 	}
 
-	registerCatalog();
-
+	// On-demand usage detail: multi-line widget above the editor.
+	pi.registerCommand(PROVIDER_ID, {
+		description: "Show Yolo-Auto request counts (session, last 1m/8m, rpm). /yolo-auto hide to dismiss",
+		handler: async (args, ctx) => {
+			if (!ctx.hasUI) return;
+			if (String(args ?? "").trim() === "hide") {
+				widgetOpen = false;
+				ctx.ui.setWidget(WIDGET_KEY, undefined);
+				return;
+			}
+			if (!cachedApiKey) await resolveApiKey(ctx.modelRegistry);
+			const sub = (await fetchSubscription(cachedApiKey)) ?? lastSub;
+			lastSub = sub;
+			widgetOpen = true;
+			updateStatus(ctx, sub);
+			const line = withRequestCount(sub ? subscriptionStatusText(sub) : undefined, snapNow());
+			ctx.ui.notify(line ? `yolo-auto: ${line}` : "yolo-auto: 0 req", "info");
+		},
+	});
 	pi.on("session_start", async (_event, ctx) => {
 		revalidateAbort?.abort();
+		lowWarned = false;
+		sessionRequests = 0;
+		requestTimes.length = 0;
+		sessionStartedAt = Date.now();
+		widgetOpen = false;
+		lastSub = null;
+		if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+		if (ctx.hasUI) ctx.ui.setWidget(WIDGET_KEY, undefined);
 		revalidateAbort = new AbortController();
 		const signal = revalidateAbort.signal;
 		await resolveApiKey(ctx.modelRegistry);
@@ -218,6 +298,14 @@ export default function (pi: ExtensionAPI) {
 		await applySubscription(await fetchSubscription(cachedApiKey, signal), ctx);
 	});
 
+	// Flat-rate plans are unlimited: count completed yolo-auto requests per session.
+	pi.on("message_end", (event, ctx) => {
+		if (event.message.role !== "assistant" || event.message.provider !== PROVIDER_ID) return;
+		noteRequest(Date.now());
+		const hit = requestMilestone(sessionRequests);
+		if (hit != null && ctx.hasUI) ctx.ui.notify(`yolo-auto: ${hit} requests this session`, "info");
+		updateStatus(ctx, lastSub);
+	});
 	pi.on("model_select", async (event, ctx) => {
 		if (event.model?.provider === PROVIDER_ID) {
 			await applySubscription(await fetchSubscription(cachedApiKey), ctx);
@@ -226,5 +314,8 @@ export default function (pi: ExtensionAPI) {
 		}
 	});
 
-	pi.on("session_shutdown", () => revalidateAbort?.abort());
+	pi.on("session_shutdown", () => {
+		revalidateAbort?.abort();
+		if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+	});
 }
