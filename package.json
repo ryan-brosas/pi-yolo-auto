@@ -20,9 +20,10 @@
     "typescript"
   ],
   "scripts": {
-    "check": "node --check index.ts && node --check models.ts && node --check usage.ts && node --check scripts/update-models.js",
+    "check": "node --check index.ts && node --check models.ts && node --check usage.ts && node --check scripts/update-models.js && node --check scripts/release-notes.mjs && node --check scripts/live-provider-probe.mjs",
     "test": "node --experimental-strip-types --test test.ts",
     "update-models": "node scripts/update-models.js",
+    "probe:live": "node --experimental-strip-types scripts/live-provider-probe.mjs",
     "build": "echo 'nothing to build'",
     "clean": "echo 'nothing to clean'",
     "typecheck": "tsc --noEmit",

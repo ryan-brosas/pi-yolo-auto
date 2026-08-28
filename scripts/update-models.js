@@ -109,31 +109,48 @@ function formatContextWindow(n) {
 }
 
 function generateReadmeTable(models) {
-	const lines = [
-		"| Model | Context | Vision | Reasoning | Input $/M | Cache Read $/M | Output $/M |",
-		"|-------|---------|--------|-----------|-----------|-----------------|------------|",
-	];
-	for (const m of models) {
-		const vision = m.input.includes("image") ? "✅" : "❌";
-		const reasoning = m.reasoning ? "✅" : "❌";
-		lines.push(`| ${m.name} | ${formatContextWindow(m.contextWindow)} | ${vision} | ${reasoning} | $${(m.cost?.input || 0).toFixed(2)} | $${(m.cost?.cacheRead || 0).toFixed(2)} | $${(m.cost?.output || 0).toFixed(2)} |`);
-	}
-	return lines.join("\n");
+	const headers = ["Model", "Context", "Vision", "Reasoning", "Input $/M", "Cache Read $/M", "Output $/M"];
+	const rows = models.map((m) => [
+		m.name,
+		formatContextWindow(m.contextWindow),
+		m.input.includes("image") ? "✅" : "❌",
+		m.reasoning ? "✅" : "❌",
+		`$${(m.cost?.input || 0).toFixed(2)}`,
+		`$${(m.cost?.cacheRead || 0).toFixed(2)}`,
+		`$${(m.cost?.output || 0).toFixed(2)}`,
+	]);
+	const widths = headers.map((header, index) => Math.max(header.length, ...rows.map((row) => row[index].length)));
+	const formatRow = (row) => `| ${row.map((value, index) => value.padEnd(widths[index])).join(" | ")} |`;
+	const separator = `| ${widths.map((width) => "-".repeat(width)).join(" | ")} |`;
+	return [formatRow(headers), separator, ...rows.map(formatRow)].join("\n");
 }
 
 function updateReadme(models) {
 	let readme = fs.readFileSync(README_PATH, "utf8");
 	const newTable = generateReadmeTable(models);
-	const tableRegex = /(## Available Models\n\n)\| Model \| Context \| Vision \| Reasoning \| Input \$\/M \| Cache Read \$\/M \| Output \$\/M \|\n\|[-| ]+\|(\n\|[^\n]*\|)*/;
+	const tableRegex = /(## Available Models\n\n)(?:\|[^\n]*\|\n?)+/;
 	if (tableRegex.test(readme)) {
-		readme = readme.replace(tableRegex, (match, header) => `${header}${newTable}
-
-`);
+		readme = readme.replace(tableRegex, (match, header) => `${header}${newTable}\n\n`);
 		if (DRY_RUN) { console.log("[dry-run] would write README table"); } else fs.writeFileSync(README_PATH, readme);
 		console.log("✓ Updated README.md");
-	} else {
-		console.warn("⚠ Could not find model table in \"## Available Models\" section");
+		return;
 	}
+
+	const heading = "## Available Models\n\n";
+	const headingAt = readme.indexOf("## Available Models");
+	if (headingAt >= 0) {
+		const afterHeading = readme.slice(headingAt + heading.length).replace(/^\n+/, "");
+		readme = `${readme.slice(0, headingAt)}${heading}${newTable}\n\n${afterHeading}`;
+	} else {
+		const insertAt = readme.indexOf("## Install");
+		if (insertAt < 0) {
+			console.warn("⚠ Could not find model-table anchor or \"## Install\" section");
+			return;
+		}
+		readme = `${readme.slice(0, insertAt)}${heading}${newTable}\n\n${readme.slice(insertAt)}`;
+	}
+	if (DRY_RUN) { console.log("[dry-run] would insert README model table"); } else fs.writeFileSync(README_PATH, readme);
+	console.log("✓ Updated README.md");
 }
 
 function updateDeprecatedModels(oldModels, newIds) {
@@ -157,8 +174,13 @@ function updateDeprecatedModels(oldModels, newIds) {
 		if (Number.isNaN(at) || Date.now() - at > DEPRECATED_MODEL_TTL_MS) { delete deprecated[id]; evicted.push(id); }
 	}
 	if (added.length || resurrected.length || evicted.length) {
-		fs.writeFileSync(deprecatedPath, JSON.stringify(deprecated, null, 2) + "\n");
-		console.log("Updated deprecated-models.json " + JSON.stringify({ added, resurrected, evicted }));
+		const change = JSON.stringify({ added, resurrected, evicted });
+		if (DRY_RUN) {
+			console.log("[dry-run] would update deprecated-models.json " + change);
+		} else {
+			fs.writeFileSync(deprecatedPath, JSON.stringify(deprecated, null, 2) + "\n");
+			console.log("Updated deprecated-models.json " + change);
+		}
 	}
 }
 
