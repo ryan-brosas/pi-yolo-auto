@@ -26,7 +26,8 @@
     "build": "echo 'nothing to build'",
     "clean": "echo 'nothing to clean'",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run check && npm run typecheck && npm test"
+    "verify": "npm run check && npm run typecheck && npm test",
+    "prepublishOnly": "npm run verify"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"
