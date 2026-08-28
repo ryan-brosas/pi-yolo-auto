@@ -101,6 +101,21 @@ npm run verify               # check + typecheck + test
 npm run update-models        # sync models.json from the API (needs a key)
 ```
 
+## Releasing
+
+Releases ship through a version bump + tag. npm publish happens from a machine
+already logged in to npm — no token is stored in GitHub:
+
+```sh
+npm version patch -m "chore(release): %s"   # bumps package.json, commits, tags vX.Y.Z
+npm publish --access public                 # publishes from your local npm login
+git push origin main --follow-tags          # tag triggers CI: verify + detailed GitHub Release
+```
+
+The `release` workflow verifies the tag matches `package.json`, runs the full
+check suite, and creates a categorized GitHub Release (full commit messages +
+per-file diffstat) via `scripts/release-notes.mjs`. If an `NPM_TOKEN` secret
+is ever set, CI publishes to npm as well.
 ## Documentation
 
 - Configuration & data ownership: [AGENTS.md](AGENTS.md)
