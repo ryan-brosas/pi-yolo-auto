@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  # --- syntax + unit tests (dependency-free, node built-ins) ---
+  check-test:
+    name: Check + unit tests
+    strategy:
+      fail-fast: false
+      matrix:
+        # LTS + current; provider runs on whatever pi's host ships.
+        node: [22, 24]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Syntax check (node --check)
+        run: npm run check
+      - name: Unit tests (node:test, no live endpoint)
+        run: npm run test
+
+  # Pure pipeline typecheck: typescript devDep only, no pi-ai/pi-coding-agent.
+  typecheck:
+    name: Typecheck (models.ts, usage.ts)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install
+      - run: npm run typecheck
+
+  # JSON validity of all config/data files (models, patch, custom, deprecated).
+  json:
+    name: Validate JSON snapshots
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node -e 'for (const f of ["models.json","patch.json","custom-models.json","deprecated-models.json","package.json","tsconfig.json"]) { JSON.parse(require("fs").readFileSync(f)); console.log("ok", f); }'
+

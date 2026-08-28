@@ -1,0 +1,26 @@
+# deps
+node_modules/
+*.tgz
+
+# npm
+npm-debug.log*
+.npm/
+
+# pi stale-while-revalidate disk cache (runtime-written)
+cache/
+
+# build/scratch
+dist/
+*.tsbuildinfo
+.cache/
+
+# env
+.env
+.env.*
+!.env.example
+
+# editor
+.idea/
+
+# pi fabric runtime state (internal)
+.pi/

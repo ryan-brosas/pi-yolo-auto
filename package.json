@@ -1,0 +1,38 @@
+{
+  "name": "pi-yolo-auto-provider",
+  "version": "0.1.0",
+  "description": "Pi provider extension for Yolo-Auto (auto-yolo). OpenAI-compatible, auto model discovery + enrichment, baseline qwen3.8-27b.",
+  "private": true,
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "provider",
+    "yolo",
+    "extension"
+  ],
+  "scripts": {
+    "check": "node --check index.ts && node --check models.ts && node --check usage.ts && node --check scripts/update-models.js",
+    "test": "node --experimental-strip-types --test test.ts",
+    "update-models": "node scripts/update-models.js",
+    "build": "echo 'nothing to build'",
+    "clean": "echo 'nothing to clean'",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run check && npm run typecheck && npm test"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "main": "index.ts",
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

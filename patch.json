@@ -1,0 +1,10 @@
+{
+  "qwen3.8-27b": {
+    "compat": {
+      "maxTokensField": "max_tokens",
+      "supportsDeveloperRole": true,
+      "supportsStore": false,
+      "supportsReasoningEffort": true
+    }
+  }
+}

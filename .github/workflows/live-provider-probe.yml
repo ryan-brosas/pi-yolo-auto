@@ -1,0 +1,31 @@
+name: live-provider-probe
+
+# Opt-in live verification against the real Yolo-Auto API. Requires the
+# YOLO_AUTO_API_KEY repository secret; without it the jobs no-op with a warning.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 4 * * 1'   # 04:23 UTC Monday
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe live /models + /usage
+    runs-on: ubuntu-latest
+    env:
+      YOLO_AUTO_API_KEY: ${{ secrets.YOLO_AUTO_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Dry-run model sync (authoritative models.json, no write-back)
+        if: env.YOLO_AUTO_API_KEY != ''
+        run: node scripts/update-models.js --dry-run
+
+      - name: Sanity-check exported helpers
+        if: env.YOLO_AUTO_API_KEY != ''
+        run: npm run check
