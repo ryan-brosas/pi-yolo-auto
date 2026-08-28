@@ -54,7 +54,7 @@ jobs:
             BODY="$(node scripts/release-notes.mjs "" "${GITHUB_REF_NAME}")"
           fi
           echo "BODY<<EOF" >> "$GITHUB_ENV"
-          printf '%s' "$BODY" >> "$GITHUB_ENV"
+          printf '%s\n' "$BODY" >> "$GITHUB_ENV"
           echo "EOF" >> "$GITHUB_ENV"
 
       - name: Create GitHub Release
