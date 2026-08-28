@@ -235,6 +235,10 @@ export default function (pi: ExtensionAPI) {
 		});
 	}
 
+	// Register immediately (embedded catalog) so the model is available before
+	// any plan revalidation completes; plan swaps re-register afterward.
+	registerCatalog();
+
 	// Refresh the footer and hot-swap the catalog when the detected plan changes.
 	async function applySubscription(sub: Subscription | null, ctx: ExtensionContext): Promise<void> {
 		const plan = sub?.plan ?? null;
