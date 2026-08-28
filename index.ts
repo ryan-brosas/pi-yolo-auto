@@ -10,10 +10,9 @@
  *      the resolved API key) -> merge with embedded -> cache -> hot-swap
  *   3. patch.json + custom-models.json applied on top of whichever source won
  *
- * Auth: two coequal paths. 1) ~/.pi/agent/auth.json under provider "yolo-auto"
- * (type api_key) — the recommended path. 2) env YOLO_AUTO_API_KEY. The key is
- * resolved at request time via the model registry / pi's $ENV resolution and is
- * never printed.
+ * Auth: /login. The key is stored under provider "yolo-auto" in
+ * ~/.pi/agent/auth.json and resolved at request time via the model registry.
+ * It is never printed.
  */
 
 import { getAgentDir, type ExtensionAPI, type ModelRegistry } from "@earendil-works/pi-coding-agent";
@@ -28,7 +27,7 @@ import { parseSubscription, subscriptionStatusText, type Subscription } from "./
 
 const PROVIDER_ID = "yolo-auto";
 const BASE_URL = "https://yolo-auto.com/v1";
-const KEY_ENV = "YOLO_AUTO_API_KEY";
+
 const MODELS_URL = `${BASE_URL}/models`;
 const USAGE_URL = `${BASE_URL}/usage`;
 const CACHE_DIR = path.join(getAgentDir(), "cache");
@@ -178,7 +177,6 @@ export default function (pi: ExtensionAPI) {
 		name: "Yolo-Auto (auto)",
 		baseUrl: BASE_URL,
 		api: "openai-completions",
-		apiKey: `$${KEY_ENV}`,
 		models: staleModels.map(toApiModel),
 	});
 
@@ -192,7 +190,6 @@ export default function (pi: ExtensionAPI) {
 				pi.registerProvider(PROVIDER_ID, {
 					baseUrl: BASE_URL,
 					api: "openai-completions",
-					apiKey: `$${KEY_ENV}`,
 					models: buildModels(withDeprecated(fresh), customModels, patches).map(toApiModel),
 				});
 			}

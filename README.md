@@ -51,7 +51,12 @@ dependency-free so it is unit-testable without pi-ai.
 
 ## Install
 
-Install the published package with pi or npm:
+Install the published package:
+
+```bash
+npm install -g pi-yolo-auto
+```
+or with pi's package manager::
 
 ```bash
 pi install npm:pi-yolo-auto
@@ -76,15 +81,7 @@ Get your API key from your Yolo-Auto account, then log in from inside pi (recomm
 You'll be prompted to paste the key; it is stored in `~/.pi/agent/auth.json`
 (key in the `access` slot) and never printed back.
 
-An environment variable is optional for headless/CI use (the `model-sync` and
-`live-provider-probe` workflows use it):
-
-```bash
-export YOLO_AUTO_API_KEY=sk-...
-```
-
-The `/login` path is canonical; the env var is a convenience fallback for
-shells where you cannot be prompted.
+The `/login` path is the one and only auth path. No environment variable.
 
 ## Usage
 
@@ -93,10 +90,9 @@ pi --list-models yolo-auto
 pi --model yolo-auto/qwen3.8-27b "hello"
 ```
 
-Credentials come from two coequal sources: `~/.pi/agent/auth.json`
-(`{ "yolo-auto": { "type": "api_key", "key": "sk-..." } }`) or the
-`YOLO_AUTO_API_KEY` environment variable. The key is resolved at request time and
-never stored or printed. Development commands live in `package.json`:
+Credentials are read from `~/.pi/agent/auth.json` (written by `/login`) and
+resolved at request time; they are never stored by this package or printed.
+Development commands live in `package.json`:
 
 ```sh
 npm test                     # offline unit tests
