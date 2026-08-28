@@ -21,7 +21,7 @@ jobs:
         node: [22, 24]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
@@ -35,7 +35,7 @@ jobs:
     name: Typecheck (models.ts, usage.ts)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -48,6 +48,6 @@ jobs:
     name: Validate JSON snapshots
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: node -e 'for (const f of ["models.json","patch.json","custom-models.json","deprecated-models.json","package.json","tsconfig.json"]) { JSON.parse(require("fs").readFileSync(f)); console.log("ok", f); }'
 
