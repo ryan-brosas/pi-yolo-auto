@@ -51,25 +51,23 @@ dependency-free so it is unit-testable without pi-ai.
 
 ## Install
 
-Install the published package:
+Install the published package as a project dependency:
 
 ```bash
-npm install -g pi-yolo-auto
+npm i pi-yolo-auto
 ```
-or with pi's package manager::
+
+or register it with pi:
 
 ```bash
 pi install npm:pi-yolo-auto
-# or, from the npm registry directly:
-npm install -g pi-yolo-auto
 ```
 
-Then load the extension and I'll see a `yolo-auto` provider in `/model`:
+Then load the extension and a `yolo-auto` provider appears in `/model`:
 
 ```bash
 pi update --extensions   # or restart pi
 ```
-
 ## Auth
 
 Get your API key from your Yolo-Auto account, then log in from inside pi (recommended):
