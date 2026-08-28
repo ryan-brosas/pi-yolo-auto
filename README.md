@@ -51,19 +51,40 @@ dependency-free so it is unit-testable without pi-ai.
 
 ## Install
 
-This is a pi package, not a CLI - wire it into the agent's `packages` and load it.
+Install the published package with pi or npm:
 
-### Run from source
-
-```sh
-git clone https://github.com/ryan-brosas/pi-yolo-auto.git
-cd pi-yolo-auto
-export YOLO_AUTO_API_KEY=sk-...
-pi update --extensions   # restart pi, then /model yolo-auto/qwen3.8-27b
+```bash
+pi install npm:pi-yolo-auto
+# or, from the npm registry directly:
+npm install -g pi-yolo-auto
 ```
 
-Add the checkout path to the `packages` array in `~/.pi/agent/settings.json` if
-it is not already wired.
+Then load the extension and I'll see a `yolo-auto` provider in `/model`:
+
+```bash
+pi update --extensions   # or restart pi
+```
+
+## Auth
+
+Get your API key from your Yolo-Auto account, then log in from inside pi (recommended):
+
+```bash
+/login yolo-auto
+```
+
+You'll be prompted to paste the key; it is stored in `~/.pi/agent/auth.json`
+(key in the `access` slot) and never printed back.
+
+An environment variable is optional for headless/CI use (the `model-sync` and
+`live-provider-probe` workflows use it):
+
+```bash
+export YOLO_AUTO_API_KEY=sk-...
+```
+
+The `/login` path is canonical; the env var is a convenience fallback for
+shells where you cannot be prompted.
 
 ## Usage
 
