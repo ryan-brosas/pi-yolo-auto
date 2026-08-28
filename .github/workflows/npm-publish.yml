@@ -1,0 +1,87 @@
+name: npm-publish
+
+# Publishes pi-yolo-auto to npm on v* tag push.
+#
+# Auth — pick ONE, the workflow auto-detects:
+#
+#   Option A: NPM_TOKEN secret (classic)
+#     1. npmjs.com -> Access Tokens -> create a token with publish access
+#     2. GitHub repo -> Settings -> Secrets and variables -> Actions ->
+#        New repository secret: NPM_TOKEN
+#
+#   Option B: npm trusted publisher / OIDC (recommended — no secret stored)
+#     1. Register this repo as a trusted publisher on npm, either:
+#        - from a machine logged into npm:  npm publish --provenance
+#          (first run offers to register the GitHub Actions publisher), or
+#        - npmjs.com -> your package -> Access -> Trusted publishers ->
+#          add ryan-brosas/pi-yolo-auto (tag pattern v*)
+#     2. Nothing else — the runner's OIDC token authenticates the publish.
+#
+# Tag must match the package.json version (e.g. push v0.1.3 for 0.1.3).
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  id-token: write    # required for Option B (OIDC) and --provenance
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify tag matches package version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VER="v$(node -p "require('./package.json').version")"
+          echo "tag=$TAG pkgver=$VER"
+          if [ "$TAG" != "$VER" ]; then
+            echo "::error::tag $TAG does not match package version $VER"
+            exit 1
+          fi
+
+      - name: Install + verify
+        run: |
+          npm ci
+          npm run verify
+
+      - name: Detect auth mode
+        id: auth
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "mode=token" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=oidc" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish (NPM_TOKEN secret)
+        if: steps.auth.outputs.mode == 'token'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish (OIDC trusted publisher)
+        if: steps.auth.outputs.mode == 'oidc'
+        run: |
+          set -o pipefail
+          npm publish --access public --provenance 2>&1 | tee /tmp/npm-publish.log || {
+            if grep -qiE "ENEEDAUTH|401|not authorized" /tmp/npm-publish.log; then
+              echo "::error::No NPM_TOKEN secret and no npm trusted publisher configured."
+              echo "::error::Option A: add an NPM_TOKEN repository secret (npm access token with publish scope)."
+              echo "::error::Option B: register this repo as a trusted publisher on npm (package -> Access -> Trusted publishers)."
+            fi
+            exit 1
+          }
