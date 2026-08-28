@@ -1,63 +1,102 @@
+<div align="center">
+
 # pi-yolo-auto
 
-[![CI](https://github.com/OWNER/pi-yolo-auto/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/pi-yolo-auto/actions/workflows/ci.yml)
-[![Live probe](https://github.com/OWNER/pi-yolo-auto/actions/workflows/live-provider-probe.yml/badge.svg)](https://github.com/OWNER/pi-yolo-auto/actions/workflows/live-provider-probe.yml)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
+**A pi provider extension for the Yolo-Auto flat-rate Qwen3.8-27B API**
 
-A **pi provider extension** for the [Yolo-Auto](https://yolo-auto.com) flat-rate
-Qwen3.8-27B API (OpenAI-compatible): auto model-discovery sync plus
-subscription (Free/Builder/Pro) usage in the footer.
+_Adds an OpenAI-compatible provider with auto model-catalog sync and per-session subscription (Free/Builder/Pro) usage to pi._
 
-## Features
+[![CI](https://img.shields.io/github/actions/workflow/status/ryan-brosas/pi-yolo-auto/ci.yml?branch=main&style=for-the-badge&label=checks)](https://github.com/ryan-brosas/pi-yolo-auto/actions/workflows/ci.yml) [![Live probe](https://img.shields.io/github/actions/workflow/status/ryan-brosas/pi-yolo-auto/live-provider-probe.yml?branch=main&style=for-the-badge&label=live-probe)](https://github.com/ryan-brosas/pi-yolo-auto/actions/workflows/live-provider-probe.yml) [![Node.js](https://img.shields.io/badge/Node.js-22-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json) [![license](https://img.shields.io/badge/license-MIT-f4c430?style=for-the-badge)](LICENSE)
 
-- OpenAI-compatible provider via `openai-completions` at `https://yolo-auto.com/v1`.
-- **Stale-while-revalidate model sync**: serves embedded `models.json` instantly, refreshes
-  from `GET /models` on session, hot-swaps via re-registration.
-- **Overlay + deprecation**: `patch.json`, `custom-models.json`, 14-day grace on delisted
-  models (`deprecated-models.json`).
-- **Subscription detection**: probes `GET /usage` and shows Free/Builder/Pro + request
-  counters in the status footer.
-- **Dependency-free core**: pure pipeline (`models.ts`, `usage.ts`) unit-tested offline.
+</div>
+
+## Run
+
+```sh
+pi --model yolo-auto/qwen3.8-27b "hello"
+```
+
+Loads the provider from the pi package registry and runs one turn against the
+Yolo-Auto endpoint. The extension serves the embedded model catalog immediately
+and refreshes it from `GET /models` on session start, so the first real prompt
+already has a resolved model id.
+
+## Why pi-yolo-auto?
+
+| | Capability | What it unlocks |
+| :-: | --- | --- |
+| ⚡ | **Flat-rate LLM access** | A paid Qwen3.8-27B endpoint integrated like any native pi provider, with no per-token surprise. |
+| 🔄 | **Self-updating model catalog** | Stale-while-revalidate sync keeps `models.json` current without downtime or manual edits. |
+| 📊 | **Subscription visibility** | The status footer shows your tier (Free/Builder/Pro) and request counters straight from `/usage`. |
+
+## How it fits
+
+```mermaid
+flowchart LR
+    API1[/GET /models/] --> Sync[update-models.js]
+    API2[/GET /usage/] --> Footer[(status footer)]
+    Sync --> Models[models.json]
+    Models --> Patch[patch.json]
+    Patch --> Custom[custom-models.json]
+    Custom --> Ext[index.ts provider]
+    Ext --> Footer
+```
+
+The extension entry point (`index.ts`) is the composition root: it registers the
+provider, owns the stale-while-revalidate loop over the embedded catalog, and
+feeds the subscription footer. The pure pipeline (`models.ts`, `usage.ts`) stays
+dependency-free so it is unit-testable without pi-ai.
 
 ## Install
 
-Wire into pi's `packages` in `~/.pi/agent/settings.json`, then `pi update --extensions`.
+Any pi package, not a CLI: wire it into the agent's `packages` and load it.
 
-## Auth — two coequal paths
+### Run from source
 
-1. **auth.json** (`~/.pi/agent/auth.json`):
-   ```json
-   { "yolo-auto": { "type": "api_key", "key": "sk-..." } }
-   ```
-2. **Environment**: `export YOLO_AUTO_API_KEY=sk-...`
+```sh
+git clone https://github.com/ryan-brosas/pi-yolo-auto.git
+cd pi-yolo-auto
+export YOLO_AUTO_API_KEY=sk-...
+pi update --extensions   # restart pi, then /model yolo-auto/qwen3.8-27b
+```
 
-The models endpoint returns `401` without a key — configure one before first use.
+Add the checkout path to the `packages` array in `~/.pi/agent/settings.json` if
+it is not already wired.
 
 ## Usage
 
-```bash
+```sh
 pi --list-models yolo-auto
 pi --model yolo-auto/qwen3.8-27b "hello"
 ```
 
-## Development
+Credentials come from two coequal sources: `~/.pi/agent/auth.json`
+(`{ "yolo-auto": { "type": "api_key", "key": "sk-..." } }`) or the
+`YOLO_AUTO_API_KEY` environment variable. The key is resolved at request time and
+never stored or printed. Development commands live in `package.json`:
 
-```bash
-npm install
-npm test                   # offline unit tests
-npm run check              # syntax check all files
-npm run typecheck          # strict pure-pipeline typecheck
-npm run verify             # check + typecheck + test
-npm run update-models -- --dry-run
-npm run update-models      # sync models.json (needs YOLO_AUTO_API_KEY)
+```sh
+npm test                     # offline unit tests
+npm run check                # syntax check all files
+npm run typecheck            # strict pure-pipeline typecheck
+npm run verify               # check + typecheck + test
+npm run update-models        # sync models.json from the API (needs a key)
 ```
 
-## CI
+## Documentation
 
-- `ci.yml` — every push/PR: syntax, unit tests (Node 22/24), typecheck, JSON validation.
-- `live-provider-probe.yml` — opt-in (manual/schedule): live /models + /usage verify;
-  needs the `YOLO_AUTO_API_KEY` repository secret.
+- Configuration & data ownership: [AGENTS.md](AGENTS.md)
+- Model catalog pipeline: [models.ts](models.ts)
+- Subscription parser: [usage.ts](usage.ts)
+- Model cache & sync: [scripts/update-models.js](scripts/update-models.js)
+
+> [!WARNING]
+>
+> The exact `/v1/usage` response shape is not yet confirmed against a live key; the
+> parser (`usage.ts`) is deliberately tolerant and will be pinned once the live
+> probe confirms the real field names.
 
 ## License
 
-MIT
+MIT, © 2026 utopia. Third-party licenses are listed in THIRD_PARTY_NOTICES.md
+when they exist.
