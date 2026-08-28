@@ -58,13 +58,7 @@ dependency-free so it is unit-testable without pi-ai.
 
 ## Install
 
-Install the published package as a project dependency:
-
-```bash
-npm i pi-yolo-auto
-```
-
-or register it with pi:
+Install it through pi's package registry:
 
 ```bash
 pi install npm:pi-yolo-auto
@@ -75,6 +69,7 @@ Then load the extension and a `yolo-auto` provider appears in `/model`:
 ```bash
 pi update --extensions   # or restart pi
 ```
+
 ## Auth
 
 Get your API key from your Yolo-Auto account, then log in from inside pi (recommended):
@@ -97,48 +92,13 @@ pi --model yolo-auto/qwen3.8-27b "hello"
 
 Credentials are read from `~/.pi/agent/auth.json` (written by `/login`) and
 resolved at request time; they are never stored by this package or printed.
-Development commands live in `package.json`:
 
-```sh
-npm test                     # offline unit tests
-npm run check                # syntax check all files
-npm run typecheck            # strict pure-pipeline typecheck
-npm run verify               # check + typecheck + test
-npm run update-models        # sync models.json from the API (needs a key)
-```
-
-## Releasing
-
-Releases ship through a version bump + tag. Pushing the tag runs two workflows:
-`npm-publish` (publishes to npm) and `release` (verifies + creates a detailed
-GitHub Release with categorized commits and diffstat):
-
-```sh
-npm version patch -m "chore(release): %s"   # bumps package.json, commits, tags vX.Y.Z
-git push origin main --follow-tags          # triggers both workflows
-```
-
-npm auth — pick one (auto-detected by the workflow):
-
-- **Option A — `NPM_TOKEN` secret:** create an npm access token with publish
-  scope (npmjs.com → Access Tokens) and add it as a repository secret named
-  `NPM_TOKEN`.
-- **Option B — npm trusted publisher (recommended, no secret stored):**
-  register this repo on npm (package → Access → Trusted publishers, or run
-  `npm publish --provenance` once from a logged-in machine). The workflow then
-  publishes via OIDC with `--provenance`.
 ## Documentation
 
 - Configuration & data ownership: [AGENTS.md](AGENTS.md)
 - Model catalog pipeline: [models.ts](models.ts)
 - Subscription parser: [usage.ts](usage.ts)
 - Model cache & sync: [scripts/update-models.js](scripts/update-models.js)
-
-> [!WARNING]
->
-> The exact `/v1/usage` response shape is not yet confirmed against a live key; the
-> parser (`usage.ts`) is deliberately tolerant and will be pinned once the live
-> probe confirms the real field names.
 
 ## License
 
