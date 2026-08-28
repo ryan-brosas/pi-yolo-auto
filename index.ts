@@ -169,6 +169,7 @@ function updateStatus(ctx: any, sub: Subscription | null): void {
 	ctx.ui?.setStatus(`${PROVIDER_ID}-sub`, md && text ? ctx.ui.theme.fg("dim", text) : undefined);
 }
 
+// noinspection JSUnusedGlobalSymbols -- Pi loads this default export from package.json
 export default function (pi: ExtensionAPI) {
 	const embeddedModels = modelsData as JsonModel[];
 	const customModels = customModelsData as JsonModel[];

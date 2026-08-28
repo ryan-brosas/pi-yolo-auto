@@ -16,6 +16,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import process from "node:process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MODELS_API_URL = "https://yolo-auto.com/v1/models";
@@ -72,9 +73,8 @@ function transformModel(apiModel, existingMap) {
 	const id = apiModel.id;
 	const inCost = convertPricing(apiModel.pricing?.prompt);
 	const outCost = convertPricing(apiModel.pricing?.completion);
-	const cacheCost = convertPricing(apiModel.pricing?.cache_prompt);
+	const cacheCost = convertPricing(apiModel.pricing?.["cache_prompt"]);
 	const hasReasoning = apiModel.reasoning_effort === true || apiModel.custom_reasoning === true || apiModel.reasoning === true;
-	const isFree = inCost === 0 && outCost === 0;
 	if (existingMap[id]) {
 		const existing = { ...existingMap[id] };
 		if (inCost > 0) existing.cost.input = inCost;
@@ -186,28 +186,33 @@ const DRY_RUN = process.argv.includes("--dry-run") || process.env.DRY_RUN === "1
 async function main() {
 	console.log("Fetching models from " + MODELS_API_URL + "...");
 	if (!KEY) console.warn("⚠ No YOLO_AUTO_API_KEY set — the endpoint likely returns 401.");
-	try {
-		const res = await fetch(MODELS_API_URL, { headers: KEY ? { Authorization: "Bearer " + KEY } : {} });
-		if (!res.ok) throw new Error("HTTP " + res.status);
-		const api = await res.json();
-		const list = Array.isArray(api) ? api : (api.data || []);
-		if (!Array.isArray(list) || list.length === 0) throw new Error("No models array in response");
-		console.log("✓ Fetched " + list.length + " models");
 
-		const existing = Array.isArray(loadJson(MODELS_JSON_PATH)) ? loadJson(MODELS_JSON_PATH) : [];
-		const existingMap = {};
-		for (const m of existing) existingMap[m.id] = m;
+	const requestInit = KEY
+		? { headers: { Authorization: "Bearer " + KEY } }
+		: undefined;
+	const res = await fetch(MODELS_API_URL, requestInit);
+	if (!res.ok) throw new Error("HTTP " + res.status);
+	const api = await res.json();
+	const list = Array.isArray(api) ? api : (api.data || []);
+	if (!Array.isArray(list) || list.length === 0) throw new Error("No models array in response");
+	console.log("✓ Fetched " + list.length + " models");
 
-		let transformed = list.map((m) => transformModel(m, existingMap));
-		transformed.sort((a, b) => a.id.localeCompare(b.id));
+	const existingData = loadJson(MODELS_JSON_PATH);
+	const existing = Array.isArray(existingData) ? existingData : [];
+	const existingMap = {};
+	for (const m of existing) existingMap[m.id] = m;
 
-		const newIds = new Set(transformed.map((m) => m.id));
-		updateDeprecatedModels(existing, newIds);
-		if (DRY_RUN) { console.log("[dry-run] would write models.json (" + transformed.length + " models)"); } else fs.writeFileSync(MODELS_JSON_PATH, JSON.stringify(transformed, null, 2) + "\n");
-		console.log("✓ Updated models.json (pure API data)");
+	let transformed = list.map((m) => transformModel(m, existingMap));
+	transformed.sort((a, b) => a.id.localeCompare(b.id));
+
+	const newIds = new Set(transformed.map((m) => m.id));
+	updateDeprecatedModels(existing, newIds);
+	if (DRY_RUN) { console.log("[dry-run] would write models.json (" + transformed.length + " models)"); } else fs.writeFileSync(MODELS_JSON_PATH, JSON.stringify(transformed, null, 2) + "\n");
+	console.log("✓ Updated models.json (pure API data)");
 
 	const patch = loadJson(PATCH_JSON_PATH);
-	const custom = Array.isArray(loadJson(CUSTOM_MODELS_JSON_PATH)) ? loadJson(CUSTOM_MODELS_JSON_PATH) : [];
+	const customData = loadJson(CUSTOM_MODELS_JSON_PATH);
+	const custom = Array.isArray(customData) ? customData : [];
 	const readmeModels = buildModels([...transformed, ...activeDeprecatedForReadme()], custom, patch);
 	readmeModels.sort((a, b) => a.name.localeCompare(b.name));
 	updateReadme(readmeModels);
@@ -216,10 +221,9 @@ async function main() {
 	console.log("Total models: " + readmeModels.length);
 	console.log("Reasoning models (patched): " + readmeModels.filter((m) => m.reasoning).length);
 	console.log("Vision models: " + readmeModels.filter((m) => m.input.includes("image")).length);
-	} catch (error) {
-		console.error("Error:", error.message);
-		process.exit(1);
-	}
 }
 
-main();
+main().catch((error) => {
+	console.error("Error:", error instanceof Error ? error.message : String(error));
+	process.exitCode = 1;
+});

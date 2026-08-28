@@ -10,6 +10,7 @@
  *   - Per-file diffstat table with totals
  */
 import { execSync } from 'node:child_process';
+import process from 'node:process';
 
 const [, , prevArg, nextArg] = process.argv;
 const next = nextArg || 'HEAD';
