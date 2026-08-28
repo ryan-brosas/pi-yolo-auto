@@ -70,12 +70,22 @@ jobs:
       - name: OIDC diagnostics
         if: steps.auth.outputs.mode == 'oidc'
         run: |
-          CODE=$(curl -s -o /tmp/idtok.json -w "%{http_code}" -X POST -H "Content-Type: application/json" \
-            -d '{"audience":"https://registry.npmjs.org/"}' \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}?${ACTIONS_ID_TOKEN_REQUEST_TOKEN}")
-          echo "token endpoint HTTP $CODE"
-          echo "body: $(head -c 200 /tmp/idtok.json)"
-          JWT=$(node -pe 'try{const o=JSON.parse(require("fs").readFileSync("/tmp/idtok.json","utf8"));o.value||""}catch(e){""}' 2>/dev/null || true)
+          echo "--- .npmrc inspection:"
+          awk '{ if ($0 ~ /_authToken/) { n=split($0, a, "= "); print "authToken line present, value length:", (n>1 ? length(a[2]) : 0) } else { print } }' "$NPM_CONFIG_USERCONFIG"
+          echo "--- relevant env vars (truncated values):"
+          env | grep -iE '^(NODE_AUTH_TOKEN|NPM_CONFIG|ACTIONS_ID)' | sed -E 's/=(.{8}).*/=\1.../'
+          echo "--- requesting ID token (try ? and & concat):"
+          JWT=""
+          for SEP in "?" "&"; do
+            CODE=$(curl -s -o /tmp/idtok.json -w "%{http_code}" -X POST -H "Content-Type: application/json" \
+              -d '{"audience":"https://registry.npmjs.org/"}' \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}${SEP}${ACTIONS_ID_TOKEN_REQUEST_TOKEN}")
+            echo "sep=$SEP -> HTTP $CODE"
+            if [ "$CODE" = "200" ]; then
+              JWT=$(node -pe 'try{const o=JSON.parse(require("fs").readFileSync("/tmp/idtok.json","utf8"));o.value||""}catch(e){""}' 2>/dev/null || true)
+              break
+            fi
+          done
           echo "JWT length: ${#JWT}"
           if [ -n "$JWT" ]; then
             echo "--- JWT claims:"
@@ -83,8 +93,6 @@ jobs:
             echo "--- GET /-/whoami with the OIDC JWT:"
             curl -s -w '\nHTTP %{http_code}\n' -H "Authorization: Bearer $JWT" https://registry.npmjs.org/-/whoami
           fi
-          echo "--- npm config list:"
-          npm config list
 
       - name: Publish (NPM_TOKEN secret)
         if: steps.auth.outputs.mode == 'token'
