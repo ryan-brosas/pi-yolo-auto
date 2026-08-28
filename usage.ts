@@ -84,8 +84,9 @@ const rawPlan = typeof planField === "string" ? planField : undefined;
 
 const requestsUsed = findNum(flat, ["requestsused", "usedrequests", "messagesused", "totalrequests", "requests"]);
 const requestsRemaining = findNum(flat, ["requestsremaining", "remaining", "remainingrequests", "dailyremaining"]);
+// Note: the real /v1/usage nests day counters under usage.day.requests;
 const requestsLimit = findNum(flat, ["requestslimit", "limit", "dailylimit", "maxrequests", "requestsperday"]);
-const requestsPerMin = findNum(flat, ["reqpermin", "requestspermin", "rpm"]);
+const requestsPerMin = findNum(flat, ["reqpermin", "requestspermin", "rpm", "requeststartsperminute"]);
 
 if (!plan && requestsUsed === undefined && requestsRemaining === undefined && requestsLimit === undefined) return null;
 

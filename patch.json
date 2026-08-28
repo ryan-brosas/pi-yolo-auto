@@ -1,10 +1,11 @@
 {
   "qwen3.8-27b": {
     "compat": {
-      "maxTokensField": "max_tokens",
-      "supportsDeveloperRole": true,
+      "supportsDeveloperRole": false,
       "supportsStore": false,
-      "supportsReasoningEffort": true
+      "supportsReasoningEffort": true,
+      "thinkingFormat": "qwen-chat-template",
+      "maxTokensField": "max_tokens"
     }
   }
 }

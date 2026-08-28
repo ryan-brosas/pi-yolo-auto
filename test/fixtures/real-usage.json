@@ -1,0 +1,223 @@
+{
+  "object": "usage",
+  "project": {
+    "id": "du_621713402787659834",
+    "name": "Rykuuun",
+    "planId": "pro",
+    "dailyRequestLimit": null,
+    "dailyRequestsRemaining": null,
+    "requestStartsPerMinute": 10,
+    "maxConcurrency": 6,
+    "concurrencySlots": 6,
+    "renewingConcurrencySlots": 6
+  },
+  "key": {
+    "id": "app_76601267-4ca3-4d81-8a8f-f35436423df7",
+    "name": "PI",
+    "keyPrefix": "yolo_KFb6D59zb"
+  },
+  "usage": {
+    "day": {
+      "period": "day",
+      "bucket": "2026-08-28",
+      "startsAt": "2026-08-28T00:00:00.000Z",
+      "endsAt": "2026-08-29T00:00:00.000Z",
+      "updatedAt": "2026-08-28T11:20:37.734Z",
+      "requests": 5068,
+      "cacheHitTokens": 764054176,
+      "inputTokens": 4586815,
+      "outputTokens": 981771,
+      "promptTokens": 768640991,
+      "completionTokens": 981771,
+      "totalTokens": 769622762,
+      "limits": {
+        "requests": null
+      },
+      "remaining": {
+        "requests": null
+      },
+      "project": {
+        "requests": 5068,
+        "cacheHitTokens": 764054176,
+        "inputTokens": 4586815,
+        "outputTokens": 981771,
+        "promptTokens": 768640991,
+        "completionTokens": 981771,
+        "totalTokens": 769622762,
+        "updatedAt": "2026-08-28T11:20:37.734Z",
+        "limits": {
+          "requests": null
+        },
+        "remaining": {
+          "requests": null
+        }
+      },
+      "key": {
+        "requests": 0,
+        "cacheHitTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "updatedAt": null,
+        "limits": {
+          "requests": null
+        },
+        "remaining": {
+          "requests": null
+        }
+      }
+    },
+    "week": {
+      "period": "week",
+      "bucket": "2026-08-24",
+      "startsAt": "2026-08-24T00:00:00.000Z",
+      "endsAt": "2026-08-31T00:00:00.000Z",
+      "updatedAt": "2026-08-28T11:20:37.734Z",
+      "requests": 12790,
+      "cacheHitTokens": 1536295352,
+      "inputTokens": 23398884,
+      "outputTokens": 5338134,
+      "promptTokens": 1559694236,
+      "completionTokens": 5338134,
+      "totalTokens": 1565032370,
+      "limits": {
+        "requests": null
+      },
+      "remaining": {
+        "requests": null
+      },
+      "project": {
+        "requests": 12790,
+        "cacheHitTokens": 1536295352,
+        "inputTokens": 23398884,
+        "outputTokens": 5338134,
+        "promptTokens": 1559694236,
+        "completionTokens": 5338134,
+        "totalTokens": 1565032370,
+        "updatedAt": "2026-08-28T11:20:37.734Z",
+        "limits": {
+          "requests": null
+        },
+        "remaining": {
+          "requests": null
+        }
+      },
+      "key": {
+        "requests": 0,
+        "cacheHitTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "updatedAt": null,
+        "limits": {
+          "requests": null
+        },
+        "remaining": {
+          "requests": null
+        }
+      }
+    },
+    "all": {
+      "period": "all",
+      "bucket": "all",
+      "startsAt": null,
+      "endsAt": null,
+      "updatedAt": "2026-08-28T11:20:37.734Z",
+      "requests": 12790,
+      "cacheHitTokens": 1536295352,
+      "inputTokens": 23398884,
+      "outputTokens": 5338134,
+      "promptTokens": 1559694236,
+      "completionTokens": 5338134,
+      "totalTokens": 1565032370,
+      "limits": {
+        "requests": null
+      },
+      "remaining": {
+        "requests": null
+      },
+      "project": {
+        "requests": 12790,
+        "cacheHitTokens": 1536295352,
+        "inputTokens": 23398884,
+        "outputTokens": 5338134,
+        "promptTokens": 1559694236,
+        "completionTokens": 5338134,
+        "totalTokens": 1565032370,
+        "updatedAt": "2026-08-28T11:20:37.734Z",
+        "limits": {
+          "requests": null
+        },
+        "remaining": {
+          "requests": null
+        }
+      },
+      "key": {
+        "requests": 0,
+        "cacheHitTokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "totalTokens": 0,
+        "updatedAt": null,
+        "limits": {
+          "requests": null
+        },
+        "remaining": {
+          "requests": null
+        }
+      }
+    },
+    "byModel": [
+      {
+        "model": "qwen3.8-27b",
+        "lastUsedAt": "2026-08-28T11:20:37.698Z",
+        "past24h": {
+          "requests": 6116,
+          "inputTokens": 7709957,
+          "outputTokens": 1607254,
+          "totalTokens": 890407707
+        },
+        "past7d": {
+          "requests": 12661,
+          "inputTokens": 23079649,
+          "outputTokens": 5279919,
+          "totalTokens": 1560175792
+        },
+        "past30d": {
+          "requests": 12661,
+          "inputTokens": 23079649,
+          "outputTokens": 5279919,
+          "totalTokens": 1560175792
+        }
+      },
+      {
+        "model": "deepseek-flash-v4",
+        "lastUsedAt": "2026-08-25T08:27:08.518Z",
+        "past24h": {
+          "requests": 0,
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "totalTokens": 0
+        },
+        "past7d": {
+          "requests": 126,
+          "inputTokens": 319235,
+          "outputTokens": 58215,
+          "totalTokens": 4856578
+        },
+        "past30d": {
+          "requests": 126,
+          "inputTokens": 319235,
+          "outputTokens": 58215,
+          "totalTokens": 4856578
+        }
+      }
+    ]
+  }
+}

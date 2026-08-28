@@ -117,3 +117,19 @@ describe("parseSubscription", () => {
 		assert.equal(subscriptionStatusText({ plan: null }), undefined);
 	});
 });
+
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const __dir = dirname(fileURLToPath(import.meta.url));
+const realUsage = JSON.parse(readFileSync(join(__dir, "test/fixtures/real-usage.json"), "utf8"));
+
+describe("parseSubscription against real /v1/usage", () => {
+	it("maps planId pro -> Pro and requestStartsPerMinute", () => {
+		const s = parseSubscription(realUsage)!;
+		assert.equal(s.plan, "Pro");
+		assert.equal(s.rawPlan, "pro");
+		assert.equal(s.requestsPerMin, 10);
+	});
+});
