@@ -4,7 +4,7 @@
 
 # pi-yolo-auto
 
-**A pi provider extension for the Yolo-Auto flat-rate Qwen3.8-27B API**
+**A pi provider extension for [Yolo-Auto](https://yolo-auto.com)'s flat-rate Qwen3.8-27B API**
 
 _Adds an OpenAI-compatible provider with auto model-catalog sync and per-session subscription (Free/Builder/Pro) usage to pi._
 
@@ -72,7 +72,7 @@ pi update --extensions   # or restart pi
 
 ## Auth
 
-Get your API key from your Yolo-Auto account, then log in from inside pi (recommended):
+Get your API key from your [Yolo-Auto account](https://yolo-auto.com), then log in from inside pi (recommended):
 
 ```bash
 /login yolo-auto
