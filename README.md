@@ -100,5 +100,5 @@ npm run update-models        # sync models.json from the API (needs a key)
 
 ## License
 
-MIT, © 2026 utopia. Third-party licenses are listed in THIRD_PARTY_NOTICES.md
+MIT, © 2026 Ryan Brosas. Third-party licenses are listed in THIRD_PARTY_NOTICES.md
 when they exist.
