@@ -30,6 +30,7 @@ already has a resolved model id.
 | ⚡ | **Flat-rate LLM access** | A paid Qwen3.8-27B endpoint integrated like any native pi provider, with no per-token surprise. |
 | 🔄 | **Self-updating model catalog** | Stale-while-revalidate sync keeps `models.json` current without downtime or manual edits. |
 | 📊 | **Subscription visibility** | The status footer shows your tier (Free/Builder/Pro) and request counters straight from `/usage`. |
+| 🪟 | **Plan-aware context** | Qwen3.8-27B reports 128K context on Free/Builder and 256K on Pro, matching the site tiers; the catalog hot-swaps when the detected plan changes. |
 
 ## How it fits
 

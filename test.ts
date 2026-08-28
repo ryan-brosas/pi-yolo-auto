@@ -5,7 +5,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
 
-import { applyPatch, buildModels, parsePrice, toApiModel, transformApiModel, type JsonModel } from "./models.ts";
+import { applyPatch, applyPlanContext, buildModels, parsePrice, toApiModel, transformApiModel, type JsonModel } from "./models.ts";
 
 const base: JsonModel = {
 	id: "qwen3.8-27b", name: "qwen3.8-27b", reasoning: true, input: ["text", "image"],
@@ -73,6 +73,30 @@ describe("toApiModel", () => {
 	});
 });
 
+
+describe("applyPlanContext", () => {
+	const planModel: JsonModel = { ...base, contextByPlan: { Free: 131072, Builder: 131072, Pro: 262144 } };
+
+	it("expands Pro to 256K and keeps Free/Builder at 128K", () => {
+		assert.equal(applyPlanContext([planModel], "Pro")[0].contextWindow, 262144);
+		assert.equal(applyPlanContext([planModel], "Builder")[0].contextWindow, 131072);
+		assert.equal(applyPlanContext([planModel], "Free")[0].contextWindow, 131072);
+	});
+
+	it("null plan keeps the catalog default", () => {
+		assert.equal(applyPlanContext([planModel], null)[0].contextWindow, 131072);
+	});
+
+	it("leaves models without contextByPlan untouched", () => {
+		assert.equal(applyPlanContext([base], "Pro")[0].contextWindow, 131072);
+	});
+
+	it("flows through buildModels from patch entries", () => {
+		const out = buildModels([base], [], { "qwen3.8-27b": { contextByPlan: { Pro: 262144 } } });
+		assert.equal(applyPlanContext(out, "Pro")[0].contextWindow, 262144);
+		assert.equal(applyPlanContext(out, "Builder")[0].contextWindow, 131072);
+	});
+});
 
 import { parseSubscription, subscriptionStatusText, type Subscription } from "./usage.ts";
 

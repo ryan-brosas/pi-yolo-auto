@@ -1,5 +1,10 @@
 {
   "qwen3.8-27b": {
+    "contextByPlan": {
+      "Free": 131072,
+      "Builder": 131072,
+      "Pro": 262144
+    },
     "compat": {
       "supportsDeveloperRole": false,
       "supportsStore": false,

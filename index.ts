@@ -22,8 +22,8 @@ import modelsData from "./models.json" with { type: "json" };
 import customModelsData from "./custom-models.json" with { type: "json" };
 import patchData from "./patch.json" with { type: "json" };
 import deprecatedData from "./deprecated-models.json" with { type: "json" };
-import { buildModels, toApiModel, transformApiModel, type JsonModel, type PatchData } from "./models.ts";
-import { parseSubscription, subscriptionStatusText, type Subscription } from "./usage.ts";
+import { applyPlanContext, buildModels, toApiModel, transformApiModel, type JsonModel, type PatchData } from "./models.ts";
+import { parseSubscription, subscriptionStatusText, type PlanTier, type Subscription } from "./usage.ts";
 
 const PROVIDER_ID = "yolo-auto";
 const BASE_URL = "https://yolo-auto.com/v1";
@@ -133,6 +133,10 @@ async function revalidateModels(apiKey: string | undefined, embedded: JsonModel[
 
 let cachedApiKey: string | undefined;
 let revalidateAbort: AbortController | null = null;
+// Latest known base catalog (embedded → cache → live) and the last plan whose
+// context windows were applied to the registered provider.
+let currentBase: JsonModel[] | null = null;
+let currentPlan: PlanTier | null = null;
 
 async function resolveApiKey(modelRegistry: ModelRegistry): Promise<void> {
 	cachedApiKey = (await modelRegistry.getApiKeyForProvider(PROVIDER_ID)) ?? undefined;
@@ -170,15 +174,34 @@ export default function (pi: ExtensionAPI) {
 	const customModels = customModelsData as JsonModel[];
 	const patches = patchData as PatchData;
 
-	const staleBase = loadStaleModels(embeddedModels);
-	const staleModels = buildModels(withDeprecated(staleBase), customModels, patches);
+	currentBase = loadStaleModels(embeddedModels);
 
-	pi.registerProvider(PROVIDER_ID, {
-		name: "Yolo-Auto (auto)",
-		baseUrl: BASE_URL,
-		api: "openai-completions",
-		models: staleModels.map(toApiModel),
-	});
+	// Re-register whenever the base catalog or the detected plan changes;
+	// plan-dependent context windows come from patch.json (contextByPlan).
+	function registerCatalog(): void {
+		const models = applyPlanContext(
+			buildModels(withDeprecated(currentBase ?? embeddedModels), customModels, patches),
+			currentPlan,
+		);
+		pi.registerProvider(PROVIDER_ID, {
+			name: "Yolo-Auto (auto)",
+			baseUrl: BASE_URL,
+			api: "openai-completions",
+			models: models.map(toApiModel),
+		});
+	}
+
+	// Refresh the footer and hot-swap the catalog when the detected plan changes.
+	async function applySubscription(sub: Subscription | null, ctx: any): Promise<void> {
+		const plan = sub?.plan ?? null;
+		if (plan !== currentPlan) {
+			currentPlan = plan;
+			registerCatalog();
+		}
+		updateStatus(ctx, sub);
+	}
+
+	registerCatalog();
 
 	pi.on("session_start", async (_event, ctx) => {
 		revalidateAbort?.abort();
@@ -187,19 +210,16 @@ export default function (pi: ExtensionAPI) {
 		await resolveApiKey(ctx.modelRegistry);
 		revalidateModels(cachedApiKey, embeddedModels, signal).then((fresh) => {
 			if (fresh && !signal.aborted) {
-				pi.registerProvider(PROVIDER_ID, {
-					baseUrl: BASE_URL,
-					api: "openai-completions",
-					models: buildModels(withDeprecated(fresh), customModels, patches).map(toApiModel),
-				});
+				currentBase = fresh;
+				registerCatalog();
 			}
 		});
-		updateStatus(ctx, await fetchSubscription(cachedApiKey, signal));
+		await applySubscription(await fetchSubscription(cachedApiKey, signal), ctx);
 	});
 
 	pi.on("model_select", async (event, ctx) => {
 		if (event.model?.provider === PROVIDER_ID) {
-			updateStatus(ctx, await fetchSubscription(cachedApiKey));
+			await applySubscription(await fetchSubscription(cachedApiKey), ctx);
 		} else {
 			updateStatus(ctx, null);
 		}
