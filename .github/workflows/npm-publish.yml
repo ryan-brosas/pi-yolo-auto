@@ -67,29 +67,6 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: OIDC diagnostics
-        if: steps.auth.outputs.mode == 'oidc'
-        run: |
-          echo "--- .npmrc inspection:"
-          awk '{ if ($0 ~ /_authToken/) { n=split($0, a, "= "); print "authToken line present, value length:", (n>1 ? length(a[2]) : 0) } else { print } }' "$NPM_CONFIG_USERCONFIG"
-          echo "--- relevant env vars (truncated values):"
-          env | grep -iE '^(NODE_AUTH_TOKEN|NPM_CONFIG|ACTIONS_ID)' | sed -E 's/=(.{8}).*/=\1.../'
-          echo "--- requesting ID token (Bearer header format):"
-          CODE=$(curl -s -o /tmp/idtok.json -w "%{http_code}" -X POST \
-            -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"audience":"https://registry.npmjs.org/"}' \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL")
-          echo "token endpoint HTTP $CODE"
-          JWT=$(node -pe 'try{const o=JSON.parse(require("fs").readFileSync("/tmp/idtok.json","utf8"));o.value||""}catch(e){""}' 2>/dev/null || true)
-          echo "JWT length: ${#JWT}"
-          if [ -n "$JWT" ]; then
-            echo "--- JWT claims:"
-            JWT="$JWT" node -e 'const j=process.env.JWT||""; const p=j.split("."); if(p.length<2){console.log("not a JWT:",JSON.stringify(j.slice(0,80)));process.exit(0)} const s=p[1].replace(/-/g,"+").replace(/_/g,"/"); console.log(JSON.stringify(JSON.parse(Buffer.from(s,"base64").toString())))'
-            echo "--- GET /-/whoami with the OIDC JWT:"
-            curl -s -w '\nHTTP %{http_code}\n' -H "Authorization: Bearer $JWT" https://registry.npmjs.org/-/whoami
-          fi
-
       - name: Publish (NPM_TOKEN secret)
         if: steps.auth.outputs.mode == 'token'
         run: npm publish --access public
@@ -100,11 +77,13 @@ jobs:
         if: steps.auth.outputs.mode == 'oidc'
         run: |
           set -o pipefail
-          npm publish --access public --provenance 2>&1 | tee /tmp/npm-publish.log || {
-            if grep -qiE "ENEEDAUTH|401|not authorized" /tmp/npm-publish.log; then
-              echo "::error::No NPM_TOKEN secret and no npm trusted publisher configured."
-              echo "::error::Option A: add an NPM_TOKEN repository secret (npm access token with publish scope)."
-              echo "::error::Option B: register this repo as a trusted publisher on npm (package -> Access -> Trusted publishers)."
+          if ! npm publish --access public --provenance --loglevel verbose 2>&1 | tee /tmp/npm-publish.log; then
+            echo "=== npm debug log (auth/request lines) ==="
+            LATEST=$(ls -t /home/runner/.npm/_logs/*debug-0.log 2>/dev/null | head -1 || true)
+            if [ -n "$LATEST" ]; then
+              grep -iE "auth|audience|oidc|bearer|token|http fetch|error|404" "$LATEST" | head -80
+            else
+              echo "no npm debug log found"
             fi
             exit 1
-          }
+          fi
