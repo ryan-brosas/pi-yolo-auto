@@ -1,5 +1,7 @@
 <div align="center">
 
+<p align="center"><img src="assets/yolo-auto-logo-mark-128.png" width="96" alt="Yolo-Auto logo" /></p>
+
 # pi-yolo-auto
 
 **A pi provider extension for the Yolo-Auto flat-rate Qwen3.8-27B API**

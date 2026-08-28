@@ -2,14 +2,22 @@
   "name": "pi-yolo-auto-provider",
   "version": "0.1.0",
   "description": "Pi provider extension for Yolo-Auto (auto-yolo). OpenAI-compatible, auto model discovery + enrichment, baseline qwen3.8-27b.",
-  "private": true,
   "type": "module",
   "keywords": [
     "pi-package",
     "pi-extension",
     "provider",
     "yolo",
-    "extension"
+    "extension",
+    "pi",
+    "yolo-auto",
+    "qwen",
+    "qwen3.8-27b",
+    "openai",
+    "flat-rate",
+    "llm",
+    "coding-agent",
+    "typescript"
   ],
   "scripts": {
     "check": "node --check index.ts && node --check models.ts && node --check usage.ts && node --check scripts/update-models.js",
@@ -34,5 +42,11 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "author": "Ryan Brosas",
+  "homepage": "https://github.com/ryan-brosas/pi-yolo-auto",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ryan-brosas/pi-yolo-auto.git"
   }
 }
