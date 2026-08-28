@@ -67,6 +67,22 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: OIDC diagnostics
+        if: steps.auth.outputs.mode == 'oidc'
+        run: |
+          echo "GITHUB_ACTIONS=${GITHUB_ACTIONS:-unset}"
+          echo "ID token request URL set: $([ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && echo yes || echo no)"
+          echo "ID token request token set: $([ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ] && echo yes || echo no)"
+          RESP=$(curl -s -X POST -H "Content-Type: application/json" \
+            -d '{"audience":"https://registry.npmjs.org/"}' \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}?${ACTIONS_ID_TOKEN_REQUEST_TOKEN}")
+          JWT=$(printf '%s' "$RESP" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).value')
+          echo "--- JWT claims:"
+          JWT="$JWT" node -e 'const j=process.env.JWT; const s=j.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"); console.log(JSON.stringify(JSON.parse(Buffer.from(s,"base64").toString())))'
+          echo "--- GET /-/whoami with the OIDC JWT:"
+          curl -s -w '\nHTTP %{http_code}\n' -H "Authorization: Bearer $JWT" https://registry.npmjs.org/-/whoami
+          echo "--- npm config list:"
+          npm config list
       - name: Publish (NPM_TOKEN secret)
         if: steps.auth.outputs.mode == 'token'
         run: npm publish --access public
