@@ -1,7 +1,7 @@
 {
   "name": "pi-yolo-auto-provider",
   "version": "0.1.0",
-  "description": "Pi provider extension for the Yolo-Auto flat-rate Qwen3.8-27B API — OpenAI-compatible, stale-while-revalidate model catalog sync, and Free/Builder/Pro subscription usage.",
+  "description": "Pi provider extension for the Yolo-Auto flat-rate Qwen3.8-27B API (OpenAI-compatible, stale-while-revalidate model catalog sync, subscription usage).",
   "type": "module",
   "keywords": [
     "pi-package",
@@ -34,7 +34,8 @@
   "pi": {
     "extensions": [
       "./index.ts"
-    ]
+    ],
+    "image": "https://raw.githubusercontent.com/ryan-brosas/pi-yolo-auto/main/assets/yolo-auto-logo-mark-128.png"
   },
   "main": "index.ts",
   "devDependencies": {
@@ -48,5 +49,19 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/ryan-brosas/pi-yolo-auto.git"
-  }
+  },
+  "files": [
+    "index.ts",
+    "models.ts",
+    "usage.ts",
+    "models.json",
+    "patch.json",
+    "custom-models.json",
+    "deprecated-models.json",
+    "scripts/",
+    "README.md",
+    "LICENSE",
+    "AGENTS.md"
+  ],
+  "license": "MIT"
 }
