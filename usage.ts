@@ -4,7 +4,8 @@
 // defensive: it accepts several plausible shapes, maps the plan to the site's
 // real tiers (Free/Builder/Pro), and degrades to null.
 
-export type YoloPlan = "Free" | "Builder" | "Pro" | null;
+export type PlanTier = "Free" | "Builder" | "Pro";
+export type YoloPlan = PlanTier | null;
 
 export interface Subscription {
 plan: YoloPlan;

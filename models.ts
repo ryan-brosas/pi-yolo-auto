@@ -1,6 +1,8 @@
 // Pure, dependency-free model pipeline for the Yolo-Auto provider.
 // Kept separate from index.ts so it is unit-testable without pi-ai/pi-coding-agent.
 
+import type { PlanTier } from "./usage.ts";
+
 export interface JsonModel {
 	id: string;
 	name: string;
@@ -9,6 +11,8 @@ export interface JsonModel {
 	cost: { input: number; output: number; cacheRead: number; cacheWrite: number };
 	contextWindow: number;
 	maxTokens: number;
+	/** Plan-dependent context windows (site tiers: Free/Builder 128K, Pro 256K). */
+	contextByPlan?: Partial<Record<PlanTier, number>>;
 	thinkingLevelMap?: Record<string, string | null>;
 	compat?: {
 		supportsDeveloperRole?: boolean;
@@ -26,6 +30,7 @@ export interface PatchEntry {
 	cost?: Partial<JsonModel["cost"]>;
 	contextWindow?: number;
 	maxTokens?: number;
+	contextByPlan?: Partial<Record<PlanTier, number>>;
 	thinkingLevelMap?: Record<string, string | null>;
 	compat?: Record<string, unknown>;
 }
@@ -84,6 +89,7 @@ export function applyPatch(model: JsonModel, patch: PatchEntry): JsonModel {
 	if (patch.input !== undefined) result.input = patch.input;
 	if (patch.contextWindow !== undefined) result.contextWindow = patch.contextWindow;
 	if (patch.maxTokens !== undefined) result.maxTokens = patch.maxTokens;
+	if (patch.contextByPlan !== undefined) result.contextByPlan = { ...patch.contextByPlan };
 	if (patch.thinkingLevelMap !== undefined) result.thinkingLevelMap = { ...patch.thinkingLevelMap };
 	if (patch.cost) {
 		result.cost = {
@@ -121,6 +127,19 @@ export function buildModels(
 		map.set(m.id, existing && pe ? applyPatch(m, pe) : m);
 	}
 	return Array.from(map.values());
+}
+
+/**
+ * Apply plan-dependent context windows declared via patch entries. Models
+ * without a contextByPlan entry are untouched; a null plan keeps the
+ * catalog default.
+ */
+export function applyPlanContext(models: JsonModel[], plan: PlanTier | null): JsonModel[] {
+	if (!plan) return models;
+	return models.map((m) => {
+		const w = m.contextByPlan?.[plan];
+		return typeof w === "number" && w > 0 ? { ...m, contextWindow: w } : m;
+	});
 }
 
 export function toApiModel(m: JsonModel): Record<string, unknown> {
