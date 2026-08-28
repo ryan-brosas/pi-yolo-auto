@@ -1,6 +1,6 @@
 {
   "name": "pi-yolo-auto",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pi provider extension for the Yolo-Auto flat-rate Qwen3.8-27B API (OpenAI-compatible, stale-while-revalidate model catalog sync, subscription usage).",
   "type": "module",
   "keywords": [
