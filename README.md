@@ -53,8 +53,9 @@ dependency-free so it is unit-testable without pi-ai.
 ## Available Models
 
 | Model       | Context | Vision | Reasoning | Input $/M | Cache Read $/M | Output $/M |
-|-------------|---------|--------|-----------|-----------|----------------|------------|
-| Qwen3.8 27B | 131K    | ✅     | ✅        | $0.00     | $0.00          | $0.00      |
+| ----------- | ------- | ------ | --------- | --------- | -------------- | ---------- |
+| Qwen3.8 27B | 131K    | ✅      | ✅         | $0.00     | $0.00          | $0.00      |
+
 
 ## Install
 
