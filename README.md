@@ -57,6 +57,7 @@ dependency-free so it is unit-testable without pi-ai.
 | Qwen3.8 27B | 131K    | ✅      | ✅         | $0.00     | $0.00          | $0.00      |
 
 
+
 ## Install
 
 Install it through pi's package registry:
