@@ -13,7 +13,55 @@
       "cacheRead": 0,
       "cacheWrite": 0
     },
-    "contextWindow": 131072,
+    "contextWindow": 262144,
     "maxTokens": 16384
+  },
+  {
+    "id": "qwen3.8-flash",
+    "name": "qwen3.8-flash",
+    "reasoning": false,
+    "input": [
+      "text"
+    ],
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "contextWindow": 262144,
+    "maxTokens": 262144
+  },
+  {
+    "id": "yolo",
+    "name": "yolo",
+    "reasoning": false,
+    "input": [
+      "text"
+    ],
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "contextWindow": 262144,
+    "maxTokens": 262144
+  },
+  {
+    "id": "yolo-small",
+    "name": "yolo-small",
+    "reasoning": false,
+    "input": [
+      "text"
+    ],
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "contextWindow": 262144,
+    "maxTokens": 262144
   }
 ]
