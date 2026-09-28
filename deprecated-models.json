@@ -1,1 +1,36 @@
-{}
+{
+  "yolo": {
+    "id": "yolo",
+    "name": "yolo",
+    "reasoning": false,
+    "input": [
+      "text"
+    ],
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "contextWindow": 262144,
+    "maxTokens": 262144,
+    "deprecatedAt": "2026-09-28T10:49:11.866Z"
+  },
+  "yolo-small": {
+    "id": "yolo-small",
+    "name": "yolo-small",
+    "reasoning": false,
+    "input": [
+      "text"
+    ],
+    "cost": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "contextWindow": 262144,
+    "maxTokens": 262144,
+    "deprecatedAt": "2026-09-28T10:49:11.866Z"
+  }
+}

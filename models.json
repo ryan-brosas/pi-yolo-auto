@@ -13,7 +13,7 @@
       "cacheRead": 0,
       "cacheWrite": 0
     },
-    "contextWindow": 262144,
+    "contextWindow": 131072,
     "maxTokens": 16384
   },
   {
@@ -29,39 +29,7 @@
       "cacheRead": 0,
       "cacheWrite": 0
     },
-    "contextWindow": 262144,
-    "maxTokens": 262144
-  },
-  {
-    "id": "yolo",
-    "name": "yolo",
-    "reasoning": false,
-    "input": [
-      "text"
-    ],
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheRead": 0,
-      "cacheWrite": 0
-    },
-    "contextWindow": 262144,
-    "maxTokens": 262144
-  },
-  {
-    "id": "yolo-small",
-    "name": "yolo-small",
-    "reasoning": false,
-    "input": [
-      "text"
-    ],
-    "cost": {
-      "input": 0,
-      "output": 0,
-      "cacheRead": 0,
-      "cacheWrite": 0
-    },
-    "contextWindow": 262144,
+    "contextWindow": 131072,
     "maxTokens": 262144
   }
 ]

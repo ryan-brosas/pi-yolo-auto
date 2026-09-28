@@ -54,10 +54,11 @@ dependency-free so it is unit-testable without pi-ai.
 
 | Model         | Context | Vision | Reasoning | Input $/M | Cache Read $/M | Output $/M |
 | ------------- | ------- | ------ | --------- | --------- | -------------- | ---------- |
-| Qwen3.8 27B   | 262K    | ✅      | ✅         | $0.00     | $0.00          | $0.00      |
-| qwen3.8-flash | 262K    | ❌      | ❌         | $0.00     | $0.00          | $0.00      |
+| Qwen3.8 27B   | 131K    | ✅      | ✅         | $0.00     | $0.00          | $0.00      |
+| qwen3.8-flash | 131K    | ❌      | ❌         | $0.00     | $0.00          | $0.00      |
 | yolo          | 262K    | ❌      | ❌         | $0.00     | $0.00          | $0.00      |
 | yolo-small    | 262K    | ❌      | ❌         | $0.00     | $0.00          | $0.00      |
+
 
 
 
